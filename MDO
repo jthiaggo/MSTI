@@ -1,0 +1,51 @@
+//https://helloitsliam.com/2023/03/23/finding-emails-using-microsoft-365-defender-advanced-hunting-queries/
+ Localizando e-mails
+
+//Obter todos os e-mails contendo '@onmicrosoft.com' na coluna SenderFromAddress
+EmailEvents
+| where SenderFromAddress contains 'onmicrosoft.com'
+
+// Obter todos os e-mails contendo '@onmicrosoft.com' na coluna RecipientEmailAddress
+EmailEvents
+| where RecipientEmailAddress contains 'onmicrosoft.com'
+
+//Obter todos os e-mails contendo '@onmicrosoft.com' na coluna RecipientEmailAddress para uma data específica
+EmailEvents
+| where RecipientEmailAddress contains 'onmicrosoft.com'
+| where startofday(Timestamp) == startofday(datetime(2024-03-21T14:18:02Z))
+
+// Receba todos os e-mails onde 'Adele' está na coluna RecipientEmailAddress
+EmailEvents
+| where RecipientEmailAddress contains 'adelev'
+
+//Obter todos os e-mails com base no preenchimento de uma variável para o e-mail que queremos pesquisar
+let Email = "adelev";
+EmailEvents
+| where RecipientEmailAddress contains Email
+
+//Executar consultas básicas é relativamente simples; No entanto, devemos nos aprofundar em algumas opções. 
+//Nosso primeiro comando é "resumir", o que nos permite transformar os resultados; 
+//Então, precisamos olhar para o comando "Project", que define o que vemos nos resultados.
+
+//Usando Resumo – Retornar a contagem de e-mails para Adele com o mesmo assunto
+let Email = "adelev";
+EmailEvents
+| where RecipientEmailAddress contains Email
+| summarize  count() by Subject
+
+
+//Usando o Project – Exibir campos específicos
+let Email = "adelev";
+EmailEvents
+| where RecipientEmailAddress contains Email
+| project Subject, SenderMailFromAddress, Timestamp, RecipientEmailAddress
+
+//Agora vamos adicionar um último comando chamado "mv-expand", que você usa para expandir matrizes dinâmicas de vários valores 
+//ou pacotes de propriedades em vários registros, geralmente chamado de "nivelamento".
+
+//Receba e-mails e exiba todos os destinatários em uma nova coluna agrupada por assunto
+EmailEvents
+| extend OtherRecipients = split(RecipientEmailAddress, ';')
+| mv-expand OtherRecipients
+| summarize Timestamp=max(Timestamp), GroupedRecipientEmailAddress=make_list(RecipientEmailAddress) by Subject
+| project Subject, Timestamp, GroupedRecipientEmailAddress
