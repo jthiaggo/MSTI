@@ -1,0 +1,55 @@
+EmailEvents
+| where Timestamp > ago(30d)
+| where isnotempty(DetectionMethods)
+| extend MDO_detection = parse_json(DetectionMethods)
+| where MDO_detection.Phish in 
+        (
+          @'["Impersonation user"]'
+        )
+| extend SenderFromAddress_IPv4 = strcat(SenderFromAddress, ", ", SenderIPv4)
+| project Timestamp, NetworkMessageId, Subject, SenderFromAddress_IPv4, RecipientEmailAddress, DeliveryLocation, MDO_detection.Phish
+
+
+***************************************************
+EmailEvents
+| where Timestamp > ago(30d)
+| where isnotempty(DetectionMethods)
+| extend MDO_detection = parse_json(DetectionMethods)
+| where MDO_detection.Phish in 
+        (
+          @'["URL detonation reputation"]',
+          @'["URL detonation"]',
+          @'["Impersonation user"]',
+          @'["Impersonation domain"]',
+          @'["Mailbox intelligence impersonation"]',
+          @'["File detonation"]',
+          @'["File detonation reputation"]',
+          @'["Campaign"]'
+        )
+| extend SenderFromAddress_IPv4 = strcat(SenderFromAddress, ", ", SenderIPv4)
+| project Timestamp, NetworkMessageId, Subject, SenderFromAddress_IPv4, RecipientEmailAddress, DeliveryLocation, MDO_detection.Phish
+
+
+******************************************************************
+//https://github.com/LearningKijo/KQL/blob/main/KQL-XDR-Hunting/Email-Microsoft-Defender-for-Office365/MDO-EOP-Query-Repository/05-EOP-PhishingDetection-Filtering.md
+//EOP Phishing Detection filtering
+EmailEvents
+| where Timestamp > ago(7d)
+| where isnotempty(DetectionMethods)
+| extend EOP_detection = parse_json(DetectionMethods)
+| where EOP_detection.Phish in 
+        (
+          @'["URL malicious reputation"]',
+          @'["Advanced filter"]',
+          @'["General filter"]',
+          @'["Spoof intra-org"]',
+          @'["Spoof external domain"]',
+          @'["Spoof DMARC"]',
+          @'["Impersonation brand"]',
+          @'["Mixed analysis detection"]',
+          @'["File reputation"]',
+          @'["Fingerprint matching"]'
+        )
+| extend SenderFromAddress_IPv4 = strcat(SenderFromAddress, ", ", SenderIPv4)
+| where DeliveryLocation == @"Inbox/folder"
+| project Timestamp, NetworkMessageId, Subject, SenderFromAddress_IPv4, RecipientEmailAddress, DeliveryLocation, EOP_detection.Phish
