@@ -1,5 +1,5 @@
 //https://helloitsliam.com/2023/03/23/finding-emails-using-microsoft-365-defender-advanced-hunting-queries/
- Localizando e-mails
+Localizando e-mails
 
 //Obter todos os e-mails contendo '@onmicrosoft.com' na coluna SenderFromAddress
 EmailEvents
