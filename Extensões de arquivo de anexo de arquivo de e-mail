@@ -1,6 +1,5 @@
-Extensões de arquivo de anexo de arquivo de e-mail
-https://github.com/alexverboon/Hunting-Queries-Detection-Rules/blob/main/Defender%20For%20Office%20365/MDO-Email%20Attachment%20File%20Extensions.md
-
+//https://github.com/alexverboon/Hunting-Queries-Detection-Rules/blob/main/Defender%20For%20Office%20365/MDO-Email%20Attachment%20File%20Extensions.md
+//Extensões de arquivo de anexo de arquivo de e-mail
 let legacyofficeformats = dynamic([".iso"]);
 EmailEvents
 | join EmailAttachmentInfo
@@ -9,7 +8,8 @@ on $left. NetworkMessageId ==  $right.NetworkMessageId
 | extend FileExtension = strcat(".", split(FileName,".",DotCount)[0])
 | where FileExtension in (legacyofficeformats)
 | where DotCount > 0
-| where EmailDirection == 'Inbound'
+| where EmailDirection in ('Inbound', 'outbound', 'Intra-org')
+//| where EmailDirection == 'Outbound'
 | project Timestamp, RecipientEmailAddress, SenderFromAddress, SenderMailFromAddress, SenderFromDomain, FileName, FileExtension, FileType, DotCount, EmailDirection, ThreatTypes, DeliveryAction, DeliveryLocation, DetectionMethods, EmailAction, ThreatNames, NetworkMessageId
 //| summarize count() by DeliveryLocation
 //|render piechart 
