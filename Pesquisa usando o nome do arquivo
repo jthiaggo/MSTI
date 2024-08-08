@@ -1,0 +1,21 @@
+// Realizar o pesquisa usando o nome do arquivo ou hash
+// (EmailAttachmentInfo,DeviceFileEvents,BehaviorEntities,CloudAppEvents) Tipo de ferramenta
+let fileName = "Phishing";
+//let fileSha1 = "decd98730cf34e1567965f6fb7085569fc1053e8";
+//let fileSha256 = "e02061a4626f950b41d89c21e9a780f8aee5c5ddda7880b753d660db09117910";
+search in (EmailAttachmentInfo,DeviceFileEvents,BehaviorEntities,CloudAppEvents)
+Timestamp between (ago(1d) .. now())
+and (FileName =~ fileName
+or (ObjectType == 'File' and ObjectName == fileName)
+//or SHA1 == fileSha1
+//or InitiatingProcessFileName =~ fileName
+//or ActivityObjects has fileName
+//or InitiatingProcessSHA1 has fileSha1
+//or SHA256 == fileSha256
+//or InitiatingProcessSHA256 == fileSha256
+)
+| extend ReportId = coalesce(ReportId_string, tostring(ReportId_long))
+//(EmailAttachmentInfo,DeviceFileEvents,BehaviorEntities,CloudAppEvents)
+
+/////A segunda condição, (ObjectType == 'File' and ObjectName == fileName), procura registros em que o campo 
+//"ObjectType" é igual a "File" e o campo "ObjectName" corresponde ao valor da variável fileName.
