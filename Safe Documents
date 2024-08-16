@@ -1,0 +1,43 @@
+# Safe Documents
+
+
+### Descrição
+Use as consultas abaixo para recuperar eventos do Safe Docs do Microsoft 365 Defender
+
+### Microsoft 365 Defender
+Todos os eventos do SafeDocs
+
+DeviceEvents
+| where ActionType == "SafeDocFileScan"
+| extend xRawEventData = parse_json(AdditionalFields)
+| extend VerificationResult =  tostring(parse_json(xRawEventData).VerificationResult)
+| extend ContainerReason = tostring(parse_json(xRawEventData).ContainerReason)
+| project Timestamp, DeviceName, ActionType,VerificationResult,FileName, FolderPath, SHA1, ReportId, ContainerReason
+
+=================== MalWare Detections   ===============================
+DeviceEvents
+| where ActionType == "SafeDocFileScan"
+| extend xRawEventData = parse_json(AdditionalFields)
+| extend VerificationResult =  tostring(parse_json(xRawEventData).VerificationResult)
+| extend ContainerReason = tostring(parse_json(xRawEventData).ContainerReason)
+| project Timestamp, DeviceName, ActionType,VerificationResult,FileName, FolderPath, SHA1, ReportId, ContainerReason
+| where VerificationResult == 'malware'
+```
+
+=============================== More filtering ===============================
+DeviceEvents
+| where ActionType == "SafeDocFileScan"
+| extend xRawEventData = parse_json(AdditionalFields)
+| extend VerificationResult =  tostring(parse_json(xRawEventData).VerificationResult)
+| extend ContainerReason = tostring(parse_json(xRawEventData).ContainerReason)
+// | distinct ContainerReason
+// | where ContainerReason == "IsFileBlock"
+// | where ContainerReason == "IsEmailAttachment"
+// | where ContainerReason == "IsInternetMarker"
+// | where ContainerReason == "IsGateKeeperFail"
+// | distinct VerificationResult
+// | where VerificationResult == "clean"
+// | where VerificationResult == "unknown"
+// | where VerificationResult == "failed"
+// | where VerificationResult == "no_result"
+// | distinct DeviceName
