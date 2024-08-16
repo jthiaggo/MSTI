@@ -1,0 +1,17 @@
+// Sentinel Sentinel Alerts & MITRE ATT&CK Analysis
+// A lâmina Microsoft Sentinel MITRE ATT&CK (prévia) oferece uma visão geral abrangente de todas as detecções do Sentinel alinhadas com a matriz de técnicas MITRE ATT&CK.
+//Como analista do Security Operations Center (SOC) supervisionando regras analíticas, você sabe quais técnicas MITRE são ativadas com mais frequência ou com menos frequência?
+//Executar a consulta KQL subsequente revelará as técnicas que os adversários mais comumente empregam.
+//Avalie quais técnicas são acionadas com mais ou menos frequência em comparação com sua cobertura Microsoft Sentinel MITRE ATT&CK (prévia).
+//Esta análise é crucial para determinar se suas regras analíticas são suficientemente robustas para identificar essas técnicas usadas com frequência.
+
+// KQL - Summarization of Techniques Triggered
+
+SecurityAlert
+| where TimeGenerated > ago(90d)
+| mv-expand todynamic(Techniques)
+| extend MitreAttackTechniques = tostring(Techniques)
+| where MitreAttackTechniques != ""
+| summarize Technique_Count=count() by MitreAttackTechniques
+| sort by Technique_Count desc
+
