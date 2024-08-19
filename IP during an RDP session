@@ -1,0 +1,22 @@
+Essa consulta recupera informações sobre todos os processos que foram iniciados a partir de um endereço IP de origem específico durante uma sessão RDP (Remote Desktop Protocol) no último dia. Aqui está um detalhamento do que ele faz:
+
+DeviceProcessEvents: esse é o conjunto de dados que está sendo consultado, que contém eventos relacionados a processos em dispositivos.
+Timestamp >= ago(1d): filtra os eventos para incluir apenas aqueles que ocorreram nas últimas 24 horas.
+IsInitiatingProcessRemoteSession == "True": garante que apenas os processos iniciados durante uma sessão remota sejam considerados.
+InitiatingProcessRemoteSessionIP == "X.X.X.X": filtra os eventos para incluir apenas aqueles iniciados a partir do endereço IP especificado (você precisa substituir "X.X.X.X" pelo endereço IP real).
+project: Seleciona e exibe colunas específicas dos resultados filtrados:
+InitiatingProcessFileName: o nome do arquivo que iniciou o processo.
+InitiatingProcessAccountSid: o SID (identificador de segurança) da conta que iniciou o processo.
+InitiatingProcessCommandLine: a linha de comando usada para iniciar o processo inicial.
+FileName: O nome do arquivo associado ao processo.
+ProcessCommandLine: a linha de comando usada para iniciar o processo.
+Em resumo, essa consulta lista detalhes sobre processos iniciados a partir de um IP específico durante sessões RDP no dia anterior, incluindo os nomes de arquivo e linhas de comando envolvidos.
+
+
+//Display all processes initiated by a source IP during an RDP session. 
+
+DeviceProcessEvents 
+| where Timestamp >= ago(1d) 
+| where IsInitiatingProcessRemoteSession == "True" 
+| where InitiatingProcessRemoteSessionIP == "X.X.X.X" // Insert your IP Address here 
+| project InitiatingProcessFileName, InitiatingProcessAccountSid, InitiatingProcessCommandLine, FileName, ProcessCommandLine 
