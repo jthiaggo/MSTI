@@ -1,0 +1,8 @@
+// MailItemsAccessed Defense
+// Simple & effective custom DefenderXDR hourly rule to detect threat actors accessing Exchange mailboxes via MailItemsAccessed log entry and marked user as compromised.
+
+CloudAppEvents
+| where Timestamp > ago(1h)
+| where IPTags has_any ("Brute force attacker",
+"Password spray attacker", "Malicious", "Tor")
+| where ActionType == "MailItemsAccessed"
