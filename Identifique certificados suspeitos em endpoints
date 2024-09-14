@@ -1,0 +1,22 @@
+##A consulta a seguir aproveita a tabela DeviceTvmCertificateInfo que está disponível na licença de complemento MDVM. Os resultados fornecidos incluem endpoints com 
+##certificados de tamanho de chave zero e nenhum algoritmo de assinatura. 
+##Um certificado detectado não possui todas as propriedades fundamentais necessárias para uma comunicação segura e deve ser investigado.
+
+
+let DeviceInformation = DeviceInfo
+    | project DeviceId, DeviceName;
+DeviceInformation
+| join ( DeviceTvmCertificateInfo
+    | where KeySize == "0"
+    | where SignatureAlgorithm == ""
+    | extend TOCN = parse_json(IssuedTo).CommonName
+    | extend TOORG = parse_json(IssuedTo).Organization
+    | extend TOCountry = parse_json(IssuedTo).CountryName 
+    | extend BYCN = parse_json(IssuedBy).CommonName
+    | extend BYORG = parse_json(IssuedBy).Organization
+    | extend BYCountry = parse_json(IssuedBy).CountryName
+    | project DeviceId, Thumbprint, TOCN, TOORG, TOCountry, 
+        BYCN, BYORG, BYCountry
+) on DeviceId
+| project DeviceId, DeviceName, Thumbprint, TOCN,
+    TOORG, TOCountry, BYCN, BYORG, BYCountry
