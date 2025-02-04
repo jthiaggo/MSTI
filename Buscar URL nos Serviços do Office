@@ -1,0 +1,17 @@
+// Define a URL específica que será investigada
+let url = "https://bnmp2.com/bnmp/auth/";
+
+// Realiza a busca nos logs de diferentes tabelas relacionadas a eventos de segurança
+search in (EmailUrlInfo, UrlClickEvents, DeviceNetworkEvents, DeviceFileEvents, DeviceEvents, BehaviorEntities)
+
+// Filtra os eventos ocorridos nos últimos 15 dias até o momento atual
+| where Timestamp between (ago(15d) .. now())
+
+// Aplica filtros para identificar eventos relacionados à URL alvo, verificando diferentes campos onde ela pode aparecer
+| where RemoteUrl has url
+    or FileOriginUrl has url
+    or FileOriginReferrerUrl has url
+    or Url has url
+
+// Limita a saída para um máximo de 100 registros para otimizar a análise
+| take 100
