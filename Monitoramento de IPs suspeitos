@@ -1,0 +1,25 @@
+############## Monitoramento de IPs suspeitos
+
+Detecção de ataques de força bruta:
+
+Verifique se há muitas tentativas de logon mal-sucedidas para a mesma conta ou de um mesmo IP.
+
+Exemplo de consulta:
+
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts = count() by AccountName, SourceIP = IpAddress
+| where FailedAttempts > 5
+
+//////////////////////////// ################################ ///////////////////////////////////
+
+Monitoramento de IPs suspeitos:
+Identifique IPs que estão tentando acessar várias contas sem sucesso.
+
+Exemplo de consulta:
+
+
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts = count() by SourceIP = IpAddress
+| where FailedAttempts > 10
