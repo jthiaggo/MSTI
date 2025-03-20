@@ -1,5 +1,21 @@
-############## Monitoramento de IPs suspeitos
+############## Monitoramento de IPs suspeitos  ###############################################
+let ip = "181.214.206.191";
+search in (IdentityLogonEvents,IdentityQueryEvents,IdentityDirectoryEvents,EmailEvents,UrlClickEvents,DeviceNetworkEvents,DeviceFileEvents,DeviceLogonEvents,DeviceEvents,BehaviorEntities,CloudAppEvents,AADSpnSignInEventsBeta,AADSignInEventsBeta)
+Timestamp between (ago(30d) .. now())
+and (// Events initiated by this IP
+LocalIP == ip
+or FileOriginIP == ip
+or RequestSourceIP == ip
+or SenderIPv4 == ip
+or SenderIPv6 == ip
+or IPAddress == ip
+// Events affecting this IP
+or RemoteIP == ip
+or DestinationIPAddress == ip
+)
+| take 100
 
+############## Monitoramento de IPs suspeitos ###############################################
 Detecção de ataques de força bruta:
 
 Verifique se há muitas tentativas de logon mal-sucedidas para a mesma conta ou de um mesmo IP.
