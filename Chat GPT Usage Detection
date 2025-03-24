@@ -1,0 +1,11 @@
+Chat GPT Usage Detection In Network Traffic
+// Dividir se o domínio consiste em 3 partes como: control.dropbox.com ou email.wetransfer.com
+let partialRemoteUrlToDetect = "openai.com"; // Para filtragem de domínio principal
+DeviceNetworkEvents
+| where Timestamp > ago(1d)
+| extend UrlParts = split(RemoteUrl, ".")
+| extend DomainWithTLD = iif(array_length(UrlParts) >= 2, strcat(UrlParts[-2], ".", UrlParts[-1]), RemoteUrl) // Obtém o domínio principal e o TLD
+| where DomainWithTLD == partialRemoteUrlToDetect or RemoteUrl has "chat.openai.com" // Verifica o domínio específico ou link encurtado
+| summarize TotalConnections = count(), LastConnection = max(Timestamp) by InitiatingProcessAccountName, DeviceName, DeviceId, InitiatingProcessFileName, RemoteUrl = DomainWithTLD
+| project DeviceName, DeviceId, InitiatingProcessAccountName, InitiatingProcessFileName, RemoteUrl, TotalConnections, LastConnection
+
