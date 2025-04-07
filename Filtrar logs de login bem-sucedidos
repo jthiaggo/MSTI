@@ -58,3 +58,22 @@ SigninLogs
 | where isnotempty(Country)
 | summarize SuccessfulLogins = count() by Country
 | order by SuccessfulLogins desc
+
+#######################///////////////////////////////////########################################
+5 -
+// Filtrar logs de login bem-sucedidos (ResultType == 0)
+SigninLogs
+| where ResultType == 0
+| where TimeGenerated >= ago(30d)
+// Extrair o país do campo LocationDetails
+| extend Country = tostring(LocationDetails["countryOrRegion"])
+// Filtrar apenas entradas dos Estados Unidos
+| where Country == "US"
+// Selecionar o nome do usuário
+| extend UserName = UserPrincipalName
+// Agrupar os logs por dia
+| extend Day = bin(TimeGenerated, 1d)
+// Contar o número de logins por país, usuário e dia
+| summarize LoginsCount = count() by Country, UserName, Day
+// Ordenar os resultados por número de logins em ordem decrescente e depois por dia
+| order by LoginsCount desc, Day asc
