@@ -1,0 +1,6 @@
+Localizar registros de aplicativos Azure
+
+AuditLogs
+| where TimeGenerated > ago(90d)
+| where OperationName in ("Add application","Add service principal")
+| project TimeGenerated, OperationName, Identity, TargetResources, ActivityDisplayName, InitiatedBy
