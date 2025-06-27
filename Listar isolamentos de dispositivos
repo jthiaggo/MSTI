@@ -1,0 +1,29 @@
+Descrição
+Essa consulta lista todas as atividades de isolamento do dispositivo que foram executadas pelo Defender para Ponto de Extremidade. 
+É uma boa prática revisá-los uma vez a cada x período. A consulta extrai vários eventos da ação de isolamento, como qual dispositivo está isolado, qual comentário de isolamento foi usado e o tipo de isolamento que foi executado.
+
+Referências
+https://learn.microsoft.com/en-us/defender-endpoint/respond-machine-alerts
+https://kqlquery.com/posts/audit-defender-xdr/
+
+
+
+Defender XDR
+CloudAppEvents
+| where Timestamp > ago(30d)
+| where ActionType == "IsolateDevice"
+| extend IsolatedDevice = tostring(parse_json(RawEventData).DeviceName), IsolationComment = tostring(parse_json(RawEventData).ActionComment), IsolationScope = tostring(parse_json(RawEventData).ActionScope)
+| project-rename InitiatedByAccountName = AccountDisplayName, InitiatedByAccounttId = AccountId
+|project-reorder Timestamp, IsolatedDevice, IsolationComment, IsolationScope, InitiatedByAccountName, InitiatedByAccounttId
+
+
+
+############
+
+Sentinel
+CloudAppEvents
+| where TimeGenerated > ago(30d)
+| where ActionType == "IsolateDevice"
+| extend IsolatedDevice = tostring(parse_json(RawEventData).DeviceName), IsolationComment = tostring(parse_json(RawEventData).ActionComment), IsolationScope = tostring(parse_json(RawEventData).ActionScope)
+| project-rename InitiatedByAccountName = AccountDisplayName, InitiatedByAccounttId = AccountId
+|project-reorder TimeGenerated, IsolatedDevice, IsolationComment, IsolationScope, InitiatedByAccountName, InitiatedByAccounttId
