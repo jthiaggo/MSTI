@@ -1,0 +1,8 @@
+## consulta identifica tentativas de logon mal-sucedidas (Event ID 4625) em eventos de segurança do Windows. 
+SecurityEvent
+| where EventID == 4625
+| project TimeGenerated, EventID, WorkstationName, Computer, Account, LogonTypeName, IpAddress
+| extend AccountEntity = Account
+| extend IPEntity = IpAddress  
+
+
