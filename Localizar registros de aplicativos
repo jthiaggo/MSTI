@@ -4,3 +4,18 @@ AuditLogs
 | where TimeGenerated > ago(90d)
 | where OperationName in ("Add application","Add service principal")
 | project TimeGenerated, OperationName, Identity, TargetResources, ActivityDisplayName, InitiatedBy
+
+
+===============================
+
+
+BUSCANDO ATUALIZAÇÃO DE API ESPECIFICA 
+AuditLogs
+| where TimeGenerated > ago(90d)
+| where OperationName == "Update service principal"
+| mv-expand TargetResources
+| extend TargetResource = parse_json(TargetResources)
+| extend TargetDisplayName = tostring(TargetResource.displayName)
+| where TargetDisplayName == "ConnectSyncProvisioning_AD-MSTI_77c620c96fe1"   // << nome exato da sua API
+| project TimeGenerated, OperationName, Identity, TargetDisplayName, ActivityDisplayName, InitiatedBy
+| order by TimeGenerated desc
