@@ -16,6 +16,6 @@ AuditLogs
 | mv-expand TargetResources
 | extend TargetResource = parse_json(TargetResources)
 | extend TargetDisplayName = tostring(TargetResource.displayName)
-| where TargetDisplayName == "ConnectSyncProvisioning_AD-MSTI_77c620c96fe1"   // << nome exato da sua API
+| where TargetDisplayName == "ConnectSyncProvisioning_AD-MXXXXXXXXX"   // << nome exato da sua API
 | project TimeGenerated, OperationName, Identity, TargetDisplayName, ActivityDisplayName, InitiatedBy
 | order by TimeGenerated desc
