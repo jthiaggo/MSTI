@@ -1,0 +1,8 @@
+## Identifique Dispositivos que Acessaram o "deepseek" com Microsoft Defender 
+
+DeviceNetworkEvents
+| where Timestamp > ago(7d) 
+| where RemoteUrl contains "deepseek" // Busca URLs com "deepseek"
+| summarize EventCount = count() by DeviceName // Conta acessos por dispositivo
+| top 10 by EventCount // Filtra os 10 dispositivos mais ativos
+| render piechart title="Top Dispositivos Acessando 'deepseek'"
