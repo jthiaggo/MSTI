@@ -15,3 +15,21 @@ search in (EmailUrlInfo, UrlClickEvents, DeviceNetworkEvents, DeviceFileEvents, 
 
 // Limita a saída para um máximo de 100 registros para otimizar a análise
 | take 100
+
+////
+let url = "https://www.XXXXXXXXXXXXXXXX.br/";
+union 
+    EmailUrlInfo, 
+    UrlClickEvents, 
+    DeviceNetworkEvents, 
+    DeviceFileEvents, 
+    DeviceEvents, 
+    BehaviorEntities
+| where Timestamp between (ago(15d) .. now())
+    and (
+        RemoteUrl has url
+        or FileOriginUrl has url
+        or FileOriginReferrerUrl has url
+        or Url has url
+    )
+| take 100
