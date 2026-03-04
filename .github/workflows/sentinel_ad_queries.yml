@@ -1,0 +1,277 @@
+# Microsoft Sentinel Threat Hunting - Active Directory
+
+Coleção de queries KQL utilizadas para detecção e investigação de ameaças em:
+
+- Active Directory
+- Azure AD
+- Windows Security Events
+
+###########################################################################################
+
+        uses: actions/msti
+
+
+      - name: 1 - Login falhando por senha expirada
+        run: |
+          echo "Query Sentinel"
+          cat << 'EOF'
+
+          // Detecta tentativas de login falhando por senha expirada
+          SigninLogs
+          | where UserPrincipalName contains "USUARIO"
+          | where ResultDescription has "password has expired"
+          | project TimeGenerated, UserPrincipalName, ResultDescription, IPAddress
+
+          EOF
+
+
+      - name: 2 - Troca de senha do usuário
+        run: |
+          cat << 'EOF'
+
+          // Auditoria de alteração de senha feita pelo próprio usuário
+          AuditLogs
+          | where OperationName == "Change user password"
+          | extend User = tostring(TargetResources[0].userPrincipalName)
+          | where User contains "USUARIO"
+          | project TimeGenerated, OperationName, User, InitiatedBy
+
+          EOF
+
+
+      - name: 3 - Reset de senha por administrador
+        run: |
+          cat << 'EOF'
+
+          // Detecta reset de senha feito por administrador
+          AuditLogs
+          | where OperationName == "Reset user password"
+          | extend User = tostring(TargetResources[0].userPrincipalName)
+          | where User contains "USUARIO"
+          | project TimeGenerated, User, InitiatedBy, Result
+
+          EOF
+
+
+      - name: 4 - Muitas falhas de login
+        run: |
+          cat << 'EOF'
+
+          // Detecta várias falhas de login para um usuário
+          SigninLogs
+          | where UserPrincipalName contains "USUARIO"
+          | where ResultType != 0
+          | summarize Tentativas=count() by UserPrincipalName, IPAddress, bin(TimeGenerated,5m)
+
+          EOF
+
+
+      - name: 5 - Conta bloqueada
+        run: |
+          cat << 'EOF'
+
+          // Conta bloqueada após muitas tentativas erradas
+          SecurityEvent
+          | where EventID == 4740
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, Computer, CallerComputerName
+
+          EOF
+
+
+      - name: 6 - Conta criada
+        run: |
+          cat << 'EOF'
+
+          // Detecta criação de nova conta no AD
+          SecurityEvent
+          | where EventID == 4720
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, SubjectUserName, Computer
+
+          EOF
+
+
+      - name: 7 - Conta deletada
+        run: |
+          cat << 'EOF'
+
+          // Detecta remoção de conta
+          SecurityEvent
+          | where EventID == 4726
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, SubjectUserName, Computer
+
+          EOF
+
+
+      - name: 8 - Usuário adicionado a grupo privilegiado
+        run: |
+          cat << 'EOF'
+
+          // Usuário adicionado a grupo de segurança
+          SecurityEvent
+          | where EventID == 4732
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, SubjectUserName, Computer
+
+          EOF
+
+
+      - name: 9 - Usuário removido de grupo
+        run: |
+          cat << 'EOF'
+
+          // Usuário removido de grupo privilegiado
+          SecurityEvent
+          | where EventID == 4733
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, SubjectUserName
+
+          EOF
+
+
+      - name: 10 - Logon bem sucedido
+        run: |
+          cat << 'EOF'
+
+          // Logon bem sucedido no Windows
+          SecurityEvent
+          | where EventID == 4624
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, Computer, LogonType
+
+          EOF
+
+
+      - name: 11 - Logon falhou
+        run: |
+          cat << 'EOF'
+
+          // Falha de autenticação
+          SecurityEvent
+          | where EventID == 4625
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, Computer, FailureReason
+
+          EOF
+
+
+      - name: 12 - Login via RDP
+        run: |
+          cat << 'EOF'
+
+          // Detecta login remoto via RDP
+          SecurityEvent
+          | where EventID == 4624
+          | where LogonType == 10
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, Computer
+
+          EOF
+
+
+      - name: 13 - Execução de PowerShell
+        run: |
+          cat << 'EOF'
+
+          // Execução de PowerShell no host
+          SecurityEvent
+          | where EventID == 4688
+          | where NewProcessName has "powershell"
+          | where Computer contains "COMPUTADOR"
+          | project TimeGenerated, Computer, NewProcessName, SubjectUserName
+
+          EOF
+
+
+      - name: 14 - Criação de serviço
+        run: |
+          cat << 'EOF'
+
+          // Criação de novo serviço no Windows
+          SecurityEvent
+          | where EventID == 4697
+          | where Computer contains "COMPUTADOR"
+          | project TimeGenerated, ServiceName, SubjectUserName, Computer
+
+          EOF
+
+
+      - name: 15 - Uso de privilégios elevados
+        run: |
+          cat << 'EOF'
+
+          // Detecta contas recebendo privilégios administrativos
+          SecurityEvent
+          | where EventID == 4672
+          | where SubjectUserName contains "USUARIO"
+          | project TimeGenerated, SubjectUserName, Computer
+
+          EOF
+
+
+      - name: 16 - Uso de conta administrativa
+        run: |
+          cat << 'EOF'
+
+          // Uso de contas admin
+          SecurityEvent
+          | where EventID == 4624
+          | where TargetUserName contains "admin"
+          | project TimeGenerated, TargetUserName, Computer, LogonType
+
+          EOF
+
+
+      - name: 17 - Possível movimento lateral
+        run: |
+          cat << 'EOF'
+
+          // Mesmo usuário logando em vários hosts
+          SecurityEvent
+          | where EventID == 4624
+          | where TargetUserName contains "USUARIO"
+          | summarize Hosts=dcount(Computer) by TargetUserName, bin(TimeGenerated,10m)
+          | where Hosts > 3
+
+          EOF
+
+
+      - name: 18 - Execução de PSExec
+        run: |
+          cat << 'EOF'
+
+          // Execução remota usando PSExec
+          SecurityEvent
+          | where EventID == 4688
+          | where NewProcessName has "psexec"
+          | project TimeGenerated, Computer, SubjectUserName
+
+          EOF
+
+
+      - name: 19 - Kerberos Ticket Granting Ticket
+        run: |
+          cat << 'EOF'
+
+          // Solicitação de TGT Kerberos
+          SecurityEvent
+          | where EventID == 4768
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, Computer
+
+          EOF
+
+
+      - name: 20 - Kerberos Service Ticket
+        run: |
+          cat << 'EOF'
+
+          // Solicitação de Service Ticket Kerberos
+          SecurityEvent
+          | where EventID == 4769
+          | where TargetUserName contains "USUARIO"
+          | project TimeGenerated, TargetUserName, ServiceName, Computer
+
+          EOF
