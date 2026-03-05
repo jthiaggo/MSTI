@@ -1,4 +1,5 @@
-#MUDANCA DE REGRAS NO SENTINEL
+#####  MUDANCA DE REGRAS NO SENTINEL #######################
+
 AzureActivity
 | where OperationNameValue == "MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE"
 | where ActivityStatusValue == "Success"
