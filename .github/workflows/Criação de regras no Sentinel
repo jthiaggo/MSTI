@@ -1,6 +1,6 @@
 ### Criação de regras no Sentinel
 
-
+1 ########################################
 AzureActivity
 | where OperationNameValue == "MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE"
 | where ActivityStatusValue == "Success"
@@ -13,3 +13,12 @@ AzureActivity
     ResourceGroup,
     SubscriptionId
 | order by TimeGenerated desc
+
+
+2 ########################################
+AzureActivity
+| where OperationNameValue =~ "MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE"
+| extend RuleName = tostring(split(ResourceId, "/")[-1])
+| project TimeGenerated, Caller, RuleName, ActivityStatusValue, ActivitySubstatusValue
+| order by TimeGenerated desc
+
