@@ -1,0 +1,34 @@
+#MUDANCA DE REGRAS NO SENTINEL
+AzureActivity
+| where OperationNameValue == "MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE"
+| where ActivityStatusValue == "Success"
+| extend RuleResource = tostring(Properties_d.resource)
+| extend RuleId = tostring(split(RuleResource, "/")[-1])
+| extend AccountName = split(Caller,"@")[0]
+| extend UPNSuffix = split(Caller,"@")[1]
+| project TimeGenerated, Caller, AccountName, UPNSuffix, RuleId, OperationNameValue, ResourceGroup
+| order by TimeGenerated desc
+
+
+ 2 ############### 
+AzureActivity
+| where OperationNameValue in (
+"MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE",
+"MICROSOFT.SECURITYINSIGHTS/ALERTRULES/DELETE"
+)
+| where ActivityStatusValue == "Success"
+| extend RuleResource = tostring(Properties_d.resource)
+| extend RuleId = tostring(split(RuleResource, "/")[-1])
+| extend WorkspaceName = tostring(split(ResourceId, "/")[8])
+| extend AccountName = tostring(split(Caller,"@")[0])
+| extend AccountUPNSuffix = tostring(split(Caller,"@")[1])
+| extend Action = case(
+    OperationNameValue contains "DELETE", "Rule Deleted",
+    OperationNameValue contains "WRITE", "Rule Created or Modified",
+    "Other"
+)
+| project
+    TimeGenerated, Caller, AccountName, AccountUPNSuffix, Action, RuleId, WorkspaceName, ResourceGroup, CorrelationId
+| order by TimeGenerated desc
+
+3 ############################################
