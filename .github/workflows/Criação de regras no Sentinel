@@ -1,0 +1,15 @@
+### Criação de regras no Sentinel
+
+
+AzureActivity
+| where OperationNameValue == "MICROSOFT.SECURITYINSIGHTS/ALERTRULES/WRITE"
+| where ActivityStatusValue == "Success"
+| where ActivitySubstatusValue == "Created"
+| extend RuleName = tostring(split(ResourceId, "/")[-1])
+| project
+    TimeGenerated,
+    Caller,
+    RuleName,
+    ResourceGroup,
+    SubscriptionId
+| order by TimeGenerated desc
