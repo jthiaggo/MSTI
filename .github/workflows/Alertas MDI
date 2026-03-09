@@ -1,0 +1,50 @@
+################ Script PowerShell para gerar falhas de login
+
+$users = Get-Content .\users.txt
+$domain = "msti"
+$target = "\\msti.com\SYSVOL"
+
+foreach ($user in $users) {
+    $username = "$domain\$user"
+    $password = ConvertTo-SecureString "WrongPassword123!" -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential($username,$password)
+
+    try {
+        New-PSDrive -Name "Z" -PSProvider FileSystem -Root $target -Credential $cred -ErrorAction Stop
+    } catch {
+        Write-Host "Falha para $username"
+    }
+
+    Remove-PSDrive Z -ErrorAction SilentlyContinue
+}
+
+
+
+##############    Teste Kerberos (mais próximo do alerta do Defender) obter tickets Kerberos com usuários inválidos
+$users = Get-Content .\users.txt
+
+foreach ($user in $users) {
+    cmd /c "runas /netonly /user:msti\$user cmd.exe"
+}
+
+
+
+
+
+##################### Gerar 100 tentativas de autenticação falhadas
+
+for ($i=1; $i -le 100; $i++) {
+
+$user = "user$i"
+$username = "msti\$user"
+
+$password = ConvertTo-SecureString "Password123!" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential($username,$password)
+
+try {
+    New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\msti.com\SYSVOL" -Credential $cred -ErrorAction Stop
+} catch {}
+
+Remove-PSDrive Z -ErrorAction SilentlyContinue
+
+}
