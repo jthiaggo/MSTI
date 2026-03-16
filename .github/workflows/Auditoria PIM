@@ -1,0 +1,74 @@
+####################################
+Auditoria PIM
+#########################################
+
+
+AuditLogs
+| where OperationName == "Add member to role requested (PIM activation)"
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| extend UserActivated = tostring(Identity)
+| mv-expand Target = todynamic(TargetResources)
+| extend PIMProfile = tostring(Target.displayName)
+| mv-expand Details = todynamic(AdditionalDetails)
+| extend Key = tostring(Details.key), Value = tostring(Details.value)
+| summarize
+    StartTime = anyif(Value, Key == "StartTime"),
+    ExpirationTime = anyif(Value, Key == "ExpirationTime")
+    by TimeGenerated, Actor, UserActivated, Category, ResultDescription, OperationName, PIMProfile
+| extend
+    StartTimeBR = format_datetime(datetime_add("hour",-3,todatetime(StartTime)), "dd/MM/yyyy HH:mm:ss"),
+    ExpirationTimeBR = format_datetime(datetime_add("hour",-3,todatetime(ExpirationTime)), "dd/MM/yyyy HH:mm:ss")
+| project TimeGenerated, OperationName, Actor, UserActivated, PIMProfile, Category, ResultDescription, StartTimeBR, ExpirationTimeBR
+| order by TimeGenerated desc
+
+
+###############################
+Duração média das sessões
+###############################
+let PIMData =
+AuditLogs
+| where OperationName == "Add member to role requested (PIM activation)"
+| mv-expand Details = todynamic(AdditionalDetails)
+| extend Key=tostring(Details.key),Value=tostring(Details.value)
+| summarize
+StartTime=anyif(Value,Key=="StartTime"),
+ExpirationTime=anyif(Value,Key=="ExpirationTime")
+by Identity
+| extend DurationHours=datetime_diff("hour",todatetime(ExpirationTime),todatetime(StartTime));
+PIMData
+| summarize AvgDuration=avg(DurationHours) by Identity
+| render barchart
+
+##########################################
+Gráfico — Ativações PIM por dia
+##############################################
+let PIMData =
+AuditLogs
+| where OperationName == "Add member to role requested (PIM activation)"
+| summarize count() by bin(TimeGenerated,1d);
+PIMData
+| render columnchart
+
+##########################################
+Query base (extração completa PIM)
+##############################################
+Essa query coleta:
+
+usuário que ativou, quem executou, StartTime, ExpirationTime, duração da sessão e 🇧🇷 horário UTC-03
+
+let PIMData =
+AuditLogs
+| where OperationName == "Add member to role requested (PIM activation)"
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| extend UserActivated = tostring(Identity)
+| mv-expand Details = todynamic(AdditionalDetails)
+| extend Key = tostring(Details.key), Value = tostring(Details.value)
+| summarize
+    StartTime = anyif(Value, Key == "StartTime"),
+    ExpirationTime = anyif(Value, Key == "ExpirationTime")
+    by TimeGenerated, Actor, UserActivated
+| extend
+    StartTimeLocal = datetime_add("hour",-3,todatetime(StartTime)),
+    ExpirationTimeLocal = datetime_add("hour",-3,todatetime(ExpirationTime))
+| extend DurationHours = datetime_diff("hour", ExpirationTimeLocal, StartTimeLocal);
+PIMData
