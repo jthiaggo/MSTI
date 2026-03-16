@@ -1,8 +1,32 @@
 ####################################
 Auditoria PIM
 #########################################
+AuditLogs
+| where OperationName == "Add member to role requested (PIM activation)"
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| extend UserActivated = tostring(Identity)
+| extend Targets = todynamic(TargetResources)
+| extend RoleActivated = tostring(Targets[0].displayName)
+| extend PIMProfile = tostring(Targets[3].displayName)
+| mv-expand Details = todynamic(AdditionalDetails)
+| extend Key = tostring(Details.key), Value = tostring(Details.value)
+| summarize
+    StartTime = anyif(Value, Key == "StartTime"),
+    ExpirationTime = anyif(Value, Key == "ExpirationTime")
+    by TimeGenerated, Actor, UserActivated, Category, ResultDescription, OperationName, RoleActivated, PIMProfile
+| extend
+    StartTimeBR = format_datetime(datetime_add("hour",-3,todatetime(StartTime)), "dd/MM/yyyy HH:mm:ss"),
+    ExpirationTimeBR = format_datetime(datetime_add("hour",-3,todatetime(ExpirationTime)), "dd/MM/yyyy HH:mm:ss")
+| extend PIMType = case(
+        Category == "ResourceManagement", "PIM - Azure Subscription",
+        Category == "GroupManagement", "PIM - Group",
+        "Other"
+    )
+| project TimeGenerated, OperationName, Actor, UserActivated, PIMType, RoleActivated, PIMProfile, Category, ResultDescription, StartTimeBR, ExpirationTimeBR
+| order by TimeGenerated desc
 
-
+###################################################################
+############################################################################
 AuditLogs
 | where OperationName == "Add member to role requested (PIM activation)"
 | extend Actor = tostring(InitiatedBy.user.userPrincipalName)
